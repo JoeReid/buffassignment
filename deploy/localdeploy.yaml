@@ -1,0 +1,69 @@
+version: '3'
+services:
+  # Basic postgres database
+  database:
+    image: "postgres"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - database-data:/var/lib/postgresql/data/
+
+  # initialisation job for the database
+  # it:
+  #   - waits for the db to be online
+  #   - runs the migration scripts
+  #   - populates the database with random data
+  #       - (checking first that there is no data, so re-starts are safe)
+  dbinit:
+    build:
+      dockerfile: build/Dockerfile.dbinit
+      context: ..
+    environment:
+      - JAEGER_REPORTER_LOG_SPANS=true
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+      - PGHOST=database
+      - PGPORT
+      - PGUSER
+      - PGPASSWORD
+      - PGDATABASE
+      - SERVE_IP
+      - SERVE_PORT
+      - SERVE_WRITE_TIMEOUT
+      - SERVE_READ_TIMEOUT
+
+  # Basic deployment of jaeger (open tracing server & viewer)
+  # This is not a production ready deployment
+  # This deployment is also ephemeral (restarts will loose traces)
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+
+  # The buff api deployment
+  api:
+    build:
+      dockerfile: build/Dockerfile.server
+      context: ..
+    ports:
+      - "8000:8000"
+    environment:
+      - JAEGER_REPORTER_LOG_SPANS=true
+      - JAEGER_AGENT_HOST=jaeger
+      - JAEGER_AGENT_PORT=6831
+      - PGHOST=database
+      - PGPORT
+      - PGUSER
+      - PGPASSWORD
+      - PGDATABASE
+      - SERVE_IP
+      - SERVE_PORT
+      - SERVE_WRITE_TIMEOUT
+      - SERVE_READ_TIMEOUT
+volumes:
+  database-data:

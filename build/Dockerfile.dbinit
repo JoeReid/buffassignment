@@ -1,0 +1,33 @@
+# ------------------------------------------------------------------------------
+# Docker build for the seed app
+# ------------------------------------------------------------------------------
+FROM golang:1.14-buster AS builder
+RUN apt-get install -qy git
+ADD . /app
+WORKDIR /app
+RUN go build ./cmd/seed/...
+
+# ------------------------------------------------------------------------------
+# Docker build for the migration tool
+# ------------------------------------------------------------------------------
+FROM golang:1.14-buster AS migrator
+RUN apt-get install -qy git
+RUN go get github.com/jackc/tern
+
+# ------------------------------------------------------------------------------
+# Final db init container
+# ------------------------------------------------------------------------------
+FROM debian:buster-slim AS dbinit
+
+# install the pg_isready command
+RUN apt-get update
+RUN apt-get install -qy postgresql-client
+
+# Copy over the bins from the other steps
+COPY --from=builder /app/seed /usr/bin/seed
+COPY --from=migrator /go/bin/tern /usr/bin/tern
+
+# Add the migration files and the db init script
+ADD ./deploy/migrations migrations
+ADD ./build/dbinit.sh dbinit.sh
+ENTRYPOINT ["./dbinit.sh"]

@@ -1,0 +1,12 @@
+FROM golang:1.14-alpine AS builder
+
+RUN apk add git
+
+ADD . /app
+WORKDIR /app
+RUN CGO_ENABLED=0 go build ./cmd/server/...
+
+FROM scratch
+WORKDIR /app
+COPY --from=builder /app/server .
+ENTRYPOINT ["./server"]
