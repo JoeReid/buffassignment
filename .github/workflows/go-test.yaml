@@ -31,20 +31,16 @@ jobs:
       with:
         go-version: ^1.14
       id: go
-
     - name: Check out code into the Go module directory
       uses: actions/checkout@v2
-
     - name: Build the docker-compose stack
       run: source ./deploy/env.sh && docker-compose -f ./deploy/testing.yaml up --build -d
     - name: Sleep
       uses: jakejarvis/wait-action@master
       with:
-        time: '10s'
-
+        time: '60s'
     - name: Test
       run: source ./deploy/env.sh && go test -coverprofile=coverage.xml -v ./...
-
     - name: CodeCov
       uses: codecov/codecov-action@v1
       with:

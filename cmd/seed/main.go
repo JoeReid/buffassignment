@@ -26,6 +26,7 @@ func main() {
 }
 
 func populate() (exitcode int) {
+	gofakeit.Seed(0)
 	sp := opentracing.StartSpan("seed postgres database")
 	defer sp.Finish()
 
