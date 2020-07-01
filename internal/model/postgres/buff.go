@@ -10,12 +10,14 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
+// question is the DB representation of the structure
 type question struct {
 	ID     uuid.UUID
 	Stream uuid.UUID
 	Text   string
 }
 
+// answer is the DB representation of the structure
 type answer struct {
 	ID       uuid.UUID
 	Question uuid.UUID
@@ -23,6 +25,7 @@ type answer struct {
 	Correct  bool
 }
 
+// GetBuff returns a model.Buff by it's id
 func (s *Store) GetBuff(id model.BuffID) (*model.Buff, error) {
 	// TODO: replace with context method
 	sp := opentracing.GlobalTracer().StartSpan("Postgres:Get Buff")
@@ -72,6 +75,8 @@ func (s *Store) GetBuff(id model.BuffID) (*model.Buff, error) {
 
 	return &mdlBuff, nil
 }
+
+// ListBuff returns a slice of model.Buff using offset and limit semantics
 func (s *Store) ListBuff(offset, limit int) ([]model.Buff, error) {
 	// TODO: replace with context method
 	sp := opentracing.GlobalTracer().StartSpan("Postgres:List Buff")
@@ -139,6 +144,8 @@ func (s *Store) ListBuff(offset, limit int) ([]model.Buff, error) {
 	return rtn, nil
 }
 
+// ListBuffForStream returns a slice of model.Buff using offset and limit semantics
+// Where all the returned buffs are ascociated with the given model.VideoStreamID
 func (s *Store) ListBuffForStream(stream model.VideoStreamID, offset, limit int) ([]model.Buff, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
@@ -200,6 +207,7 @@ func (s *Store) ListBuffForStream(stream model.VideoStreamID, offset, limit int)
 	return rtn, nil
 }
 
+// CreateBuff adds a new buff object into the postgres store
 func (s *Store) CreateBuff(buff model.Buff) error {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
@@ -249,10 +257,14 @@ func (s *Store) CreateBuff(buff model.Buff) error {
 	return tx.Commit()
 }
 
+// UpdateBuff replaces the Buff with ID model.BuffID with the given object
+// This method is not yet implemented
 func (s *Store) UpdateBuff(model.BuffID, model.Buff) error {
 	return errors.New("not implemented")
 }
 
+// DeleteBuff deleted the Buff with ID model.BuffID
+// This method is not yet implemented
 func (s *Store) DeleteBuff(model.BuffID) error {
 	return errors.New("not implemented")
 }

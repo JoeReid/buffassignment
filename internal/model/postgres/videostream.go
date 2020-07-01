@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// videoStream is the DB representation of the structure
 type videoStream struct {
 	ID      uuid.UUID
 	Title   string
@@ -16,6 +17,7 @@ type videoStream struct {
 	Updated time.Time
 }
 
+// GetVideoStream returns a model.VideoStream by it's id
 func (s *Store) GetVideoStream(id model.VideoStreamID) (*model.VideoStream, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
@@ -37,6 +39,7 @@ func (s *Store) GetVideoStream(id model.VideoStreamID) (*model.VideoStream, erro
 	}, nil
 }
 
+// ListVideoStream returns a slice of model.VideoStream using offset and limit semantics
 func (s *Store) ListVideoStream(offset, limit int) ([]model.VideoStream, error) {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
@@ -71,6 +74,7 @@ func (s *Store) ListVideoStream(offset, limit int) ([]model.VideoStream, error) 
 	return mdlVids, nil
 }
 
+// CreateVideoStream adds a new VideoStream object into the postgres store
 func (s *Store) CreateVideoStream(vid model.VideoStream) error {
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
@@ -84,10 +88,14 @@ func (s *Store) CreateVideoStream(vid model.VideoStream) error {
 	return err
 }
 
+// UpdateVideoStream replaces the VideoStream with ID model.VideoStreamID with the given object
+// This method is not yet implemented
 func (s *Store) UpdateVideoStream(model.VideoStreamID, model.VideoStream) error {
 	return errors.New("not implemented")
 }
 
+// DeleteVideoStream deleted the VideoStream with ID model.VideoStreamID
+// This method is not yet implemented
 func (s *Store) DeleteVideoStream(model.VideoStreamID) error {
 	return errors.New("not implemented")
 }
