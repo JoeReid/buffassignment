@@ -3,6 +3,7 @@ Sportbuff Assignment
 
 [![codecov](https://codecov.io/gh/JoeReid/buffassignment/branch/master/graph/badge.svg)](https://codecov.io/gh/JoeReid/buffassignment)
 ![Pipeline](https://github.com/JoeReid/buffassignment/workflows/Pipeline/badge.svg)
+[![GoDoc](https://godoc.org/github.com/JoeReid/buffassignment?status.svg)](https://godoc.org/github.com/JoeReid/buffassignment)
 
 These instructions have been verified on an ubnuntu 10.04.4 machine
 and it is probably safe to assume it works on all sane linux distros.
