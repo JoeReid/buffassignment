@@ -47,6 +47,15 @@ go test ./...
 docker-compose -f ./deploy/testing.yaml down --volumes
 ```
 
+### N/B:
+
+There are two docker compose files (`./deploy/testing.yaml`, `./deploy/localdeploy.yaml`)
+
+`testing.yaml` is just the postgres database and it's init task. This should be used to spin up a testing env only
+
+`localdeploy.yaml` deploys the full service and the DB etc. This should be used if you want to explore the service
+(I.E. running curl requests against the endpoints)
+
 ### Example Requests
 
 Get a list of all the video_streams (using yaml codec for read-ability)
