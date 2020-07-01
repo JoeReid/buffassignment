@@ -217,6 +217,9 @@ func (s *Store) CreateBuff(buff model.Buff) error {
 
 	_, err = tx.Exec(q, v...)
 	if err != nil {
+		// No need to check the error here,
+		// just make a best attempt to clean up the transaction
+		// nolint:errcheck
 		defer tx.Rollback()
 		return err
 	}
@@ -226,12 +229,18 @@ func (s *Store) CreateBuff(buff model.Buff) error {
 			uuid.UUID(ans.ID), uuid.UUID(buff.ID), ans.Text, ans.Correct,
 		).ToSql()
 		if err != nil {
+			// No need to check the error here,
+			// just make a best attempt to clean up the transaction
+			// nolint:errcheck
 			defer tx.Rollback()
 			return err
 		}
 
 		_, err = tx.Exec(q2, v2...)
 		if err != nil {
+			// No need to check the error here,
+			// just make a best attempt to clean up the transaction
+			// nolint:errcheck
 			defer tx.Rollback()
 			return err
 		}
