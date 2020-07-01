@@ -48,8 +48,31 @@ docker-compose -f ./deploy/testing.yaml down --volumes
 
 ### Example Requests
 
+Get a list of all the video_streams (using yaml codec for read-ability)
 ```
-TODO
+$ curl 'localhost:8000/v1/video_streams?codec=yaml'
+- stream_id: 063ed3fa-ae43-4b72-9e11-a66a6cd20fc6
+  stream_title: swiftly severe stream
+  stream_created_at: 2020-07-01T04:53:26.390435Z
+  stream_updated_at: 2020-07-01T05:01:02.262704Z
+
+  ... SNIP ...
+```
+
+Get all the buffs one for the streams we found (using a UUID from above)
+```
+$ curl 'localhost:8000/v1/video_streams/063ed3fa-ae43-4b72-9e11-a66a6cd20fc6/buffs?codec=yaml'
+- buff_id: f7163986-938f-4247-b3e2-8ea5ce439885
+  stream_id: 063ed3fa-ae43-4b72-9e11-a66a6cd20fc6
+  question_text: Neutra cold-pressed gluten-free?
+  correct_answer: safety
+  incorrect_answer:
+  - waste
+  - head
+  - card
+  - file
+
+  ... SNIP ...
 ```
 
 About
@@ -57,7 +80,8 @@ About
 
 ### API
 
-The API is implemented as a restful API served over normal HTTP
+The API is implemented as a restful API served over normal HTTP.
+
 Only `GET` methods were required by this task, but on further development
 the other actions (create, update, delete) can be implemented with the
 other HTTP methods (`POST`, `PUT`, `DELETE`).
@@ -70,7 +94,7 @@ other HTTP methods (`POST`, `PUT`, `DELETE`).
 | /v1/buffs                      | GET    | True       | True        |
 | /v1/buffs/{uuid}               | GET    | False      | True        |
 
-Pagination:
+#### Pagination:
 
 Paginated endpoints use count and skip parameters (defaulting to `count=10` and `skip=0`)
 Count is the number of items to return, and skip is the number of blocks (size of count) to skip.
@@ -81,7 +105,7 @@ These defaults can be over-ridden by setting the URL params on the request.
 
 E.g. `?count=6&skip=3` returning items 12-17 (indexed from 0)
 
-Codec:
+#### Codec:
 
 The rest API supports multi codec behaviour, returning data in JSON by default.
 The codec can be changed by providing the `codec` URL param. Valid values are:
