@@ -1,6 +1,9 @@
 Sportbuff Assignment
 ====================
 
+[![codecov](https://codecov.io/gh/JoeReid/buffassignment/branch/master/graph/badge.svg)](https://codecov.io/gh/JoeReid/buffassignment)
+![Pipeline](https://github.com/JoeReid/buffassignment/workflows/Pipeline/badge.svg)
+
 These instructions have been verified on an ubnuntu 10.04.4 machine
 and it is probably safe to assume it works on all sane linux distros.
 
@@ -26,13 +29,13 @@ Run some queries
 curl localhost:8000/v1/video_streams
 ```
 
-Stop the service:
+Stop the service
 
 ```
 docker-compose -f ./deploy/localdeploy.yaml down --volumes
 ```
 
-###Run tests
+### Run tests
 
 Spin-up the testing env, run the go tests, and tear it down again
 
@@ -43,7 +46,7 @@ go test ./...
 docker-compose -f ./deploy/testing.yaml down --volumes
 ```
 
-###Example Requests
+### Example Requests
 
 ```
 TODO
@@ -52,7 +55,7 @@ TODO
 About
 -----
 
-###API
+### API
 
 The API is implemented as a restful API served over normal HTTP
 Only `GET` methods were required by this task, but on further development
@@ -89,7 +92,7 @@ The codec can be changed by providing the `codec` URL param. Valid values are:
 | codec=json,pretty | indented JSON encoding |
 | codec=yaml        | YAML encoding          |
 
-###Database
+### Database
 
 The database is a simple postgres database. It is maintained using the migration scripts in `deploy/migrations/`
 using the migration tool tern.
@@ -97,13 +100,13 @@ using the migration tool tern.
 For convenience, there is a dbinit container (run automatically in the docker-compose) that migrates the database and runs a populate job to fill it with
 fake data.
 
-###Observability
+### Observability
 
 There is a basic observability stack using opentracing which is viewable from the Jaeger
 service in the docker-compose file.
 
 
-###Project Structure
+### Project Structure
 
 The project follows the repo layout suggestions from the [golang standards](https://github.com/golang-standards/project-layout)
 project. For ease of digestion, I have provided an annotated tree of the repo here:
