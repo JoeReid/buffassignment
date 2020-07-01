@@ -14,6 +14,11 @@ import (
 	"github.com/opentracing/opentracing-go"
 )
 
+// Versioned builds the full versioned api for the buff service
+// complete with internal db connections.
+//
+// The api is returned as a chi router, allowing for easy use as a
+// subrouter, if desired.
 func Versioned() (*chi.Mux, error) {
 	r := chi.NewRouter()
 
@@ -59,6 +64,7 @@ func v1() (*chi.Mux, error) {
 	}
 
 	// TODO: how do we shut this down?
+	// Do we need to? can it just follow the lifecycle of the service?
 	dc, err := config.DBConfig()
 	if err != nil {
 		return nil, err
