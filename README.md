@@ -42,7 +42,7 @@ Spin-up the testing env, run the go tests, and tear it down again
 
 ```
 source ./deploy/env.sh
-docker-compose -f ./deploy/testing.yaml up --build
+docker-compose -f ./deploy/testing.yaml up --build -d
 go test ./...
 docker-compose -f ./deploy/testing.yaml down --volumes
 ```
