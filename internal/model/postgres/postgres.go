@@ -11,6 +11,7 @@ import (
 
 var _ model.Store = &Store{}
 
+// Store is a postgres implementation of the model.Store interface
 type Store struct {
 	host     string
 	port     int
@@ -45,6 +46,7 @@ var (
 
 type StoreOption func(*Store) error
 
+// NewStore returns a new Store object built with the given DB options
 func NewStore(options ...StoreOption) (*Store, error) {
 	const (
 		defaultPort           = 5432
@@ -106,6 +108,7 @@ func NewStore(options ...StoreOption) (*Store, error) {
 	}
 }
 
+// SetDBUser sets the user used in the db connection
 func SetDBUser(user string) StoreOption {
 	return func(p *Store) error {
 		p.user = user
@@ -113,6 +116,7 @@ func SetDBUser(user string) StoreOption {
 	}
 }
 
+// SetDBPassword sets the password used in the db connection
 func SetDBPassword(pass string) StoreOption {
 	return func(p *Store) error {
 		p.password = pass
@@ -120,6 +124,7 @@ func SetDBPassword(pass string) StoreOption {
 	}
 }
 
+// SetDBHostname sets the host used in the db connection
 func SetDBHostname(host string) StoreOption {
 	return func(p *Store) error {
 		p.host = host
@@ -127,6 +132,7 @@ func SetDBHostname(host string) StoreOption {
 	}
 }
 
+// SetDBPort sets the port used in the db connection
 func SetDBPort(port int) StoreOption {
 	return func(p *Store) error {
 		p.port = port
@@ -134,6 +140,7 @@ func SetDBPort(port int) StoreOption {
 	}
 }
 
+// SetDBName sets the databse name used in the db connection
 func SetDBName(name string) StoreOption {
 	return func(p *Store) error {
 		p.database = name
@@ -141,6 +148,8 @@ func SetDBName(name string) StoreOption {
 	}
 }
 
+// SetDBConnectTimeout sets the timeout used in making the initial db connection
+// This is useful if the DB may not yet be online when the service starts
 func SetConnectTimeout(t time.Duration) StoreOption {
 	return func(p *Store) error {
 		p.connectTimeout = t
