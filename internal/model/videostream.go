@@ -1,6 +1,7 @@
 package model
 
 import (
+	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -15,12 +16,12 @@ import (
 // Genericising the storage actions in this way makes the code considerably
 // easier to re-factor with respect to storage sub-systems, should they need to change
 type VideoStreamStore interface {
-	GetVideoStream(VideoStreamID) (*VideoStream, error)
-	ListVideoStream(offset, limit int) ([]VideoStream, error)
+	GetVideoStream(context.Context, VideoStreamID) (*VideoStream, error)
+	ListVideoStream(ctx context.Context, offset, limit int) ([]VideoStream, error)
 
-	CreateVideoStream(VideoStream) error
-	UpdateVideoStream(VideoStreamID, VideoStream) error
-	DeleteVideoStream(VideoStreamID) error
+	CreateVideoStream(context.Context, VideoStream) error
+	UpdateVideoStream(context.Context, VideoStreamID, VideoStream) error
+	DeleteVideoStream(context.Context, VideoStreamID) error
 }
 
 // VideoStream defines the abstract representation of the VideoStream type in the data model

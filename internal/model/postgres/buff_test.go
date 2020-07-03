@@ -1,6 +1,7 @@
 package postgres_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -31,7 +32,7 @@ func TestGetBuff(t *testing.T) {
 	sentinelUUID, err := uuid.Parse(`167939cb-6627-46e9-95af-5a25367951ba`)
 	require.NoError(t, err, "failed to parse uuid")
 
-	b, err := store.GetBuff(model.BuffID(sentinelUUID))
+	b, err := store.GetBuff(context.TODO(), model.BuffID(sentinelUUID))
 	require.NoError(t, err, "failed to get buff")
 	assert.NotEmpty(t, b, "the buff should be populated with data")
 }
@@ -53,7 +54,7 @@ func TestListBuff(t *testing.T) {
 	)
 	require.NoError(t, err, "failed to create store")
 
-	b, err := store.ListBuff(0, 0)
+	b, err := store.ListBuff(context.TODO(), 0, 0)
 	require.NoError(t, err, "failed to get buff")
 	assert.NotEmpty(t, b, "the buff should be populated with data")
 }
@@ -73,10 +74,10 @@ func TestListBuffForStream(t *testing.T) {
 	require.NoError(t, err, "failed to create store")
 
 	// Get a single video_stream from the store
-	v, err := store.ListVideoStream(0, 1)
+	v, err := store.ListVideoStream(context.TODO(), 0, 1)
 	require.NoError(t, err, "failed to get video stream")
 
-	b, err := store.ListBuffForStream(v[0].ID, 0, 0)
+	b, err := store.ListBuffForStream(context.TODO(), v[0].ID, 0, 0)
 	require.NoError(t, err, "failed to list buff")
 	assert.NotEmpty(t, b, "the buff should be populated with data")
 }
@@ -100,7 +101,7 @@ func TestCreateBuff(t *testing.T) {
 	sentinelUUID3 := uuid.New()
 
 	// Get a single video_stream from the store
-	v, err := store.ListVideoStream(0, 1)
+	v, err := store.ListVideoStream(context.TODO(), 0, 1)
 	require.NoError(t, err, "failed to get video stream")
 
 	b := model.Buff{
@@ -112,7 +113,7 @@ func TestCreateBuff(t *testing.T) {
 			{ID: model.AnswerID(sentinelUUID3), Text: "43", Correct: false},
 		},
 	}
-	err = store.CreateBuff(b)
+	err = store.CreateBuff(context.TODO(), b)
 	require.NoError(t, err, "failed to create buff")
 }
 
@@ -131,10 +132,10 @@ func TestDeleteBuff(t *testing.T) {
 	require.NoError(t, err, "failed to create store")
 
 	// Get a single buff
-	b, err := store.ListBuff(0, 1)
+	b, err := store.ListBuff(context.TODO(), 0, 1)
 	require.NoError(t, err, "failed to get buff")
 
-	err = store.DeleteBuff(b[0].ID)
+	err = store.DeleteBuff(context.TODO(), b[0].ID)
 
 	// For now this feature is not implemented
 	require.Error(t, err, "not implemented")
@@ -155,7 +156,7 @@ func TestUpdateBuff(t *testing.T) {
 	require.NoError(t, err, "failed to create store")
 
 	// Get a single buff
-	b, err := store.ListBuff(0, 1)
+	b, err := store.ListBuff(context.TODO(), 0, 1)
 	require.NoError(t, err, "failed to get buff")
 
 	// Modify it
@@ -166,7 +167,7 @@ func TestUpdateBuff(t *testing.T) {
 	}
 
 	// save the update
-	err = store.UpdateBuff(b[0].ID, b[0])
+	err = store.UpdateBuff(context.TODO(), b[0].ID, b[0])
 
 	// For now this feature is not implemented
 	require.Error(t, err, "not implemented")

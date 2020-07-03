@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -32,11 +33,11 @@ func main() {
 }
 
 func genServer() (*http.Server, error) {
-	sp := opentracing.StartSpan("configure api server")
+	sp, ctx := opentracing.StartSpanFromContext(context.Background(), "configure api server")
 	defer sp.Finish()
 
 	tracer.Log(sp, "build versioned api enpoints")
-	r, err := api.Versioned()
+	r, err := api.Versioned(ctx)
 	if err != nil {
 		tracer.SetError(sp, err)
 		return nil, err

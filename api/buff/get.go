@@ -4,10 +4,12 @@ import (
 	"net/http"
 
 	"github.com/JoeReid/apiutils"
+	"github.com/JoeReid/apiutils/tracer"
 	"github.com/JoeReid/buffassignment/api/types"
 	"github.com/JoeReid/buffassignment/internal/model"
 	"github.com/go-chi/chi"
 	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
 )
 
 // NewGetHandler returns a new instance of the get action of
@@ -30,20 +32,32 @@ type buffGet struct {
 // This also makes testing easier, as there is a test codec that allows us to peek at the output
 // in a testing context.
 func (b *buffGet) ServeCodec(c apiutils.Codec, w http.ResponseWriter, r *http.Request) {
+	sp, ctx := opentracing.StartSpanFromContext(r.Context(), "get buff handler")
+	defer sp.Finish()
+
+	tracer.Log(sp, "get uuid from url params")
 	bID, err := uuid.Parse(chi.URLParam(r, "uuid"))
 	if err != nil {
-		c.Respond(r.Context(), w, http.StatusBadRequest, err)
+		tracer.SetError(sp, err)
+		c.Respond(ctx, w, http.StatusBadRequest, err)
 		return
 	}
 
-	buff, err := b.store.GetBuff(model.BuffID(bID))
+	tracer.Logf(sp, "get buff: %v", bID)
+	buff, err := b.store.GetBuff(ctx, model.BuffID(bID))
 	if err != nil {
 		if err == model.ErrNotFound {
-			c.Respond(r.Context(), w, http.StatusNotFound, err)
+			tracer.Log(sp, "buff not found")
+			c.Respond(ctx, w, http.StatusNotFound, err)
 			return
 		}
-		c.Respond(r.Context(), w, http.StatusInternalServerError, err)
+
+		tracer.Log(sp, "unexpected store error")
+		tracer.SetError(sp, err)
+		c.Respond(ctx, w, http.StatusInternalServerError, err)
 		return
 	}
-	c.Respond(r.Context(), w, http.StatusOK, types.NewBuff(*buff))
+
+	tracer.Log(sp, "return buff")
+	c.Respond(ctx, w, http.StatusOK, types.NewBuff(*buff))
 }

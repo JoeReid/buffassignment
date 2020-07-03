@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"context"
 	"errors"
 
 	"github.com/JoeReid/apiutils/tracer"
@@ -26,25 +27,25 @@ type answer struct {
 }
 
 // GetBuff returns a model.Buff by it's id
-func (s *Store) GetBuff(id model.BuffID) (*model.Buff, error) {
-	// TODO: replace with context method
-	sp := opentracing.GlobalTracer().StartSpan("Postgres:Get Buff")
+func (s *Store) GetBuff(ctx context.Context, id model.BuffID) (*model.Buff, error) {
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres get buff")
 	defer sp.Finish()
 
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
+	tracer.Log(sp, "build sql")
 	q, v, err := psql.Select(buffFields...).From(questionTable).Join(
 		answerTable+" ON questions.id = answers.question",
 	).Where("questions.id = ?", uuid.UUID(id)).Limit(1).ToSql()
 	if err != nil {
-		tracer.Log(sp, "failed to build sql query")
 		tracer.SetError(sp, err)
 		return nil, err
 	}
 
+	tracer.Logf(sp, "sql: %v", q)
+
 	res, err := s.db.Queryx(q, v...)
 	if err != nil {
-		tracer.Log(sp, "failed to run query")
 		tracer.SetError(sp, err)
 		return nil, err
 	}
@@ -77,13 +78,13 @@ func (s *Store) GetBuff(id model.BuffID) (*model.Buff, error) {
 }
 
 // ListBuff returns a slice of model.Buff using offset and limit semantics
-func (s *Store) ListBuff(offset, limit int) ([]model.Buff, error) {
-	// TODO: replace with context method
-	sp := opentracing.GlobalTracer().StartSpan("Postgres:List Buff")
+func (s *Store) ListBuff(ctx context.Context, offset, limit int) ([]model.Buff, error) {
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres list buff")
 	defer sp.Finish()
 
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
+	tracer.Log(sp, "build sql")
 	qb := psql.Select(buffFields...).From(questionTable).Join(
 		answerTable + " ON questions.id = answers.question",
 	)
@@ -97,13 +98,15 @@ func (s *Store) ListBuff(offset, limit int) ([]model.Buff, error) {
 
 	q, v, err := qb.ToSql()
 	if err != nil {
-		tracer.Log(sp, "failed to build sql query")
 		tracer.SetError(sp, err)
 		return nil, err
 	}
 
+	tracer.Logf(sp, "sql: %v", q)
+
 	res, err := s.db.Queryx(q, v...)
 	if err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
@@ -117,6 +120,8 @@ func (s *Store) ListBuff(offset, limit int) ([]model.Buff, error) {
 			&ques.ID, &ques.Stream, &ques.Text,
 			&ans.ID, &ans.Question, &ans.Text, &ans.Correct,
 		); err != nil {
+			tracer.Log(sp, "failed to scan results")
+			tracer.SetError(sp, err)
 			return nil, err
 		}
 
@@ -146,9 +151,13 @@ func (s *Store) ListBuff(offset, limit int) ([]model.Buff, error) {
 
 // ListBuffForStream returns a slice of model.Buff using offset and limit semantics
 // Where all the returned buffs are ascociated with the given model.VideoStreamID
-func (s *Store) ListBuffForStream(stream model.VideoStreamID, offset, limit int) ([]model.Buff, error) {
+func (s *Store) ListBuffForStream(ctx context.Context, stream model.VideoStreamID, offset, limit int) ([]model.Buff, error) {
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres list buff for stream")
+	defer sp.Finish()
+
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
+	tracer.Log(sp, "build sql")
 	qb := psql.Select(buffFields...).From(questionTable).Join(
 		answerTable+" ON questions.id = answers.question",
 	).Where("questions.stream = ?", uuid.UUID(stream))
@@ -162,11 +171,15 @@ func (s *Store) ListBuffForStream(stream model.VideoStreamID, offset, limit int)
 
 	q, v, err := qb.ToSql()
 	if err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
+	tracer.Logf(sp, "sql: %v", q)
+
 	res, err := s.db.Queryx(q, v...)
 	if err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
@@ -180,6 +193,8 @@ func (s *Store) ListBuffForStream(stream model.VideoStreamID, offset, limit int)
 			&ques.ID, &ques.Stream, &ques.Text,
 			&ans.ID, &ans.Question, &ans.Text, &ans.Correct,
 		); err != nil {
+			tracer.Log(sp, "failed to scan results")
+			tracer.SetError(sp, err)
 			return nil, err
 		}
 
@@ -208,18 +223,27 @@ func (s *Store) ListBuffForStream(stream model.VideoStreamID, offset, limit int)
 }
 
 // CreateBuff adds a new buff object into the postgres store
-func (s *Store) CreateBuff(buff model.Buff) error {
+func (s *Store) CreateBuff(ctx context.Context, buff model.Buff) error {
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres list buff for stream")
+	defer sp.Finish()
+
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
+	tracer.Log(sp, "build sql")
 	q, v, err := psql.Insert(questionTable).Columns(questionFields...).Values(
 		uuid.UUID(buff.ID), uuid.UUID(buff.Stream), buff.Question,
 	).ToSql()
 	if err != nil {
+		tracer.SetError(sp, err)
 		return err
 	}
 
+	tracer.Logf(sp, "sql: %v", q)
+
 	tx, err := s.db.Begin()
 	if err != nil {
+		tracer.Log(sp, "failed to start trasaction")
+		tracer.SetError(sp, err)
 		return err
 	}
 
@@ -229,10 +253,13 @@ func (s *Store) CreateBuff(buff model.Buff) error {
 		// just make a best attempt to clean up the transaction
 		// nolint:errcheck
 		defer tx.Rollback()
+
+		tracer.SetError(sp, err)
 		return err
 	}
 
 	for _, ans := range buff.Answers {
+		tracer.Log(sp, "build sql")
 		q2, v2, err := psql.Insert(answerTable).Columns(answerFields...).Values(
 			uuid.UUID(ans.ID), uuid.UUID(buff.ID), ans.Text, ans.Correct,
 		).ToSql()
@@ -241,8 +268,12 @@ func (s *Store) CreateBuff(buff model.Buff) error {
 			// just make a best attempt to clean up the transaction
 			// nolint:errcheck
 			defer tx.Rollback()
+
+			tracer.SetError(sp, err)
 			return err
 		}
+
+		tracer.Logf(sp, "sql: %v", q)
 
 		_, err = tx.Exec(q2, v2...)
 		if err != nil {
@@ -250,6 +281,8 @@ func (s *Store) CreateBuff(buff model.Buff) error {
 			// just make a best attempt to clean up the transaction
 			// nolint:errcheck
 			defer tx.Rollback()
+
+			tracer.SetError(sp, err)
 			return err
 		}
 	}
@@ -259,12 +292,12 @@ func (s *Store) CreateBuff(buff model.Buff) error {
 
 // UpdateBuff replaces the Buff with ID model.BuffID with the given object
 // This method is not yet implemented
-func (s *Store) UpdateBuff(model.BuffID, model.Buff) error {
+func (s *Store) UpdateBuff(context.Context, model.BuffID, model.Buff) error {
 	return errors.New("not implemented")
 }
 
 // DeleteBuff deleted the Buff with ID model.BuffID
 // This method is not yet implemented
-func (s *Store) DeleteBuff(model.BuffID) error {
+func (s *Store) DeleteBuff(context.Context, model.BuffID) error {
 	return errors.New("not implemented")
 }

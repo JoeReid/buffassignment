@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"time"
@@ -26,9 +27,10 @@ func main() {
 }
 
 func populate() (exitcode int) {
-	gofakeit.Seed(0)
-	sp := opentracing.StartSpan("seed postgres database")
+	sp, ctx := opentracing.StartSpanFromContext(context.Background(), "seed postgres database")
 	defer sp.Finish()
+
+	gofakeit.Seed(0)
 
 	tracer.Log(sp, "read db config from environment")
 	dc, err := config.DBConfig()
@@ -69,7 +71,7 @@ func populate() (exitcode int) {
 		updated := gofakeit.DateRange(startdate, now)
 
 		tracer.Log(sp, "create video stream entry")
-		if err := store.CreateVideoStream(model.VideoStream{
+		if err := store.CreateVideoStream(ctx, model.VideoStream{
 			ID:        vID,
 			Title:     fmt.Sprintf("%s %s stream", gofakeit.Adverb(), gofakeit.Adjective()),
 			CreatedAt: startdate,
@@ -110,7 +112,7 @@ func populate() (exitcode int) {
 			}
 
 			tracer.Log(sp, "create buff entry")
-			if err := store.CreateBuff(model.Buff{
+			if err := store.CreateBuff(ctx, model.Buff{
 				ID:       bID,
 				Stream:   vID,
 				Question: gofakeit.Question(),
