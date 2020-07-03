@@ -54,6 +54,9 @@ func Versioned(ctx context.Context) (*chi.Mux, error) {
 }
 
 func v1(ctx context.Context) (*chi.Mux, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
 	sp, ctx := opentracing.StartSpanFromContext(ctx, "build versioned api")
 	defer sp.Finish()
 

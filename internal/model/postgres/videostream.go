@@ -22,6 +22,9 @@ type videoStream struct {
 
 // GetVideoStream returns a model.VideoStream by it's id
 func (s *Store) GetVideoStream(ctx context.Context, id model.VideoStreamID) (*model.VideoStream, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
 	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres get video stream")
 	defer sp.Finish()
 
@@ -52,6 +55,9 @@ func (s *Store) GetVideoStream(ctx context.Context, id model.VideoStreamID) (*mo
 
 // ListVideoStream returns a slice of model.VideoStream using offset and limit semantics
 func (s *Store) ListVideoStream(ctx context.Context, offset, limit int) ([]model.VideoStream, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
 	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres list video stream")
 	defer sp.Finish()
 
@@ -95,6 +101,9 @@ func (s *Store) ListVideoStream(ctx context.Context, offset, limit int) ([]model
 
 // CreateVideoStream adds a new VideoStream object into the postgres store
 func (s *Store) CreateVideoStream(ctx context.Context, vid model.VideoStream) error {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
 	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres create video stream")
 	defer sp.Finish()
 

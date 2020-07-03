@@ -28,6 +28,9 @@ type answer struct {
 
 // GetBuff returns a model.Buff by it's id
 func (s *Store) GetBuff(ctx context.Context, id model.BuffID) (*model.Buff, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
 	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres get buff")
 	defer sp.Finish()
 
@@ -79,6 +82,9 @@ func (s *Store) GetBuff(ctx context.Context, id model.BuffID) (*model.Buff, erro
 
 // ListBuff returns a slice of model.Buff using offset and limit semantics
 func (s *Store) ListBuff(ctx context.Context, offset, limit int) ([]model.Buff, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
 	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres list buff")
 	defer sp.Finish()
 
@@ -152,6 +158,9 @@ func (s *Store) ListBuff(ctx context.Context, offset, limit int) ([]model.Buff, 
 // ListBuffForStream returns a slice of model.Buff using offset and limit semantics
 // Where all the returned buffs are ascociated with the given model.VideoStreamID
 func (s *Store) ListBuffForStream(ctx context.Context, stream model.VideoStreamID, offset, limit int) ([]model.Buff, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
 	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres list buff for stream")
 	defer sp.Finish()
 
@@ -224,6 +233,9 @@ func (s *Store) ListBuffForStream(ctx context.Context, stream model.VideoStreamI
 
 // CreateBuff adds a new buff object into the postgres store
 func (s *Store) CreateBuff(ctx context.Context, buff model.Buff) error {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
 	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres list buff for stream")
 	defer sp.Finish()
 
