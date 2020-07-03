@@ -1,6 +1,10 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 // BuffStore defines all the actions needed to implement a buff storage layer
 // This could be implemented by:
@@ -11,13 +15,13 @@ import "github.com/google/uuid"
 // Genericising the storage actions in this way makes the code considerably
 // easier to re-factor with respect to storage sub-systems, should they need to change
 type BuffStore interface {
-	GetBuff(BuffID) (*Buff, error)
-	ListBuff(offset, limit int) ([]Buff, error)
-	ListBuffForStream(stream VideoStreamID, offset, limit int) ([]Buff, error)
+	GetBuff(context.Context, BuffID) (*Buff, error)
+	ListBuff(ctx context.Context, offset, limit int) ([]Buff, error)
+	ListBuffForStream(ctx context.Context, stream VideoStreamID, offset, limit int) ([]Buff, error)
 
-	CreateBuff(Buff) error
-	UpdateBuff(BuffID, Buff) error
-	DeleteBuff(BuffID) error
+	CreateBuff(context.Context, Buff) error
+	UpdateBuff(context.Context, BuffID, Buff) error
+	DeleteBuff(context.Context, BuffID) error
 }
 
 // BuffID is a uuid.UUID type

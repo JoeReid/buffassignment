@@ -4,8 +4,10 @@ import (
 	"net/http"
 
 	"github.com/JoeReid/apiutils"
+	"github.com/JoeReid/apiutils/tracer"
 	"github.com/JoeReid/buffassignment/api/types"
 	"github.com/JoeReid/buffassignment/internal/model"
+	"github.com/opentracing/opentracing-go"
 )
 
 // NewListHandler returns a new instance of the list action of
@@ -28,20 +30,32 @@ type streamList struct {
 // This also makes testing easier, as there is a test codec that allows us to peek at the output
 // in a testing context.
 func (s *streamList) ServeCodec(c apiutils.Codec, w http.ResponseWriter, r *http.Request) {
+	sp, ctx := opentracing.StartSpanFromContext(r.Context(), "list stream handler")
+	defer sp.Finish()
+
+	tracer.Log(sp, "read pagination values from request")
 	count, skip, err := apiutils.Paginate(r, apiutils.DefaultCount(10), apiutils.MaxCount(10))
 	if err != nil {
-		c.Respond(r.Context(), w, http.StatusBadRequest, err)
+		tracer.SetError(sp, err)
+		c.Respond(ctx, w, http.StatusBadRequest, err)
 		return
 	}
 
-	streams, err := s.store.ListVideoStream(count*skip, count)
+	tracer.Log(sp, "list video streams from store")
+	streams, err := s.store.ListVideoStream(ctx, count*skip, count)
 	if err != nil {
 		if err == model.ErrNotFound {
-			c.Respond(r.Context(), w, http.StatusOK, []types.VideoStream{})
+			tracer.Log(sp, "streams not found")
+			c.Respond(ctx, w, http.StatusOK, []types.VideoStream{})
 			return
 		}
-		c.Respond(r.Context(), w, http.StatusInternalServerError, err)
+
+		tracer.Log(sp, "unexpected store error")
+		tracer.SetError(sp, err)
+		c.Respond(ctx, w, http.StatusInternalServerError, err)
 		return
 	}
-	c.Respond(r.Context(), w, http.StatusOK, types.NewVideoStreams(streams))
+
+	tracer.Log(sp, "return streams")
+	c.Respond(ctx, w, http.StatusOK, types.NewVideoStreams(streams))
 }

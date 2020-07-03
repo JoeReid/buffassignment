@@ -1,12 +1,15 @@
 package postgres
 
 import (
+	"context"
 	"errors"
 	"time"
 
+	"github.com/JoeReid/apiutils/tracer"
 	"github.com/JoeReid/buffassignment/internal/model"
 	sq "github.com/Masterminds/squirrel"
 	"github.com/google/uuid"
+	"github.com/opentracing/opentracing-go"
 )
 
 // videoStream is the DB representation of the structure
@@ -18,16 +21,27 @@ type videoStream struct {
 }
 
 // GetVideoStream returns a model.VideoStream by it's id
-func (s *Store) GetVideoStream(id model.VideoStreamID) (*model.VideoStream, error) {
+func (s *Store) GetVideoStream(ctx context.Context, id model.VideoStreamID) (*model.VideoStream, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres get video stream")
+	defer sp.Finish()
+
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
+	tracer.Log(sp, "build sql")
 	q, v, err := psql.Select(videoStreamFields...).From(videoStreamTable).Where("id = ?", uuid.UUID(id)).Limit(1).ToSql()
 	if err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
+	tracer.Logf(sp, "sql: %v", q)
+
 	vid := videoStream{}
 	if err := s.db.Get(&vid, q, v...); err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
@@ -40,9 +54,16 @@ func (s *Store) GetVideoStream(id model.VideoStreamID) (*model.VideoStream, erro
 }
 
 // ListVideoStream returns a slice of model.VideoStream using offset and limit semantics
-func (s *Store) ListVideoStream(offset, limit int) ([]model.VideoStream, error) {
+func (s *Store) ListVideoStream(ctx context.Context, offset, limit int) ([]model.VideoStream, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres list video stream")
+	defer sp.Finish()
+
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
+	tracer.Log(sp, "build sql")
 	qb := psql.Select(videoStreamFields...).From(videoStreamTable)
 
 	if offset != 0 {
@@ -54,11 +75,15 @@ func (s *Store) ListVideoStream(offset, limit int) ([]model.VideoStream, error) 
 
 	q, v, err := qb.ToSql()
 	if err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
+	tracer.Logf(sp, "sql: %v", q)
+
 	vids := make([]videoStream, 0)
 	if err := s.db.Select(&vids, q, v...); err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
@@ -75,27 +100,42 @@ func (s *Store) ListVideoStream(offset, limit int) ([]model.VideoStream, error) 
 }
 
 // CreateVideoStream adds a new VideoStream object into the postgres store
-func (s *Store) CreateVideoStream(vid model.VideoStream) error {
+func (s *Store) CreateVideoStream(ctx context.Context, vid model.VideoStream) error {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "postgres create video stream")
+	defer sp.Finish()
+
 	psql := sq.StatementBuilder.PlaceholderFormat(sq.Dollar)
 
+	tracer.Log(sp, "build sql")
 	q, v, err := psql.Insert(videoStreamTable).Columns(videoStreamFields...).Values(
 		uuid.UUID(vid.ID), vid.Title, vid.CreatedAt, vid.UpdatedAt,
 	).ToSql()
 	if err != nil {
+		tracer.SetError(sp, err)
 		return err
 	}
+
+	tracer.Logf(sp, "sql: %v", q)
+
 	_, err = s.db.Exec(q, v...)
+	if err != nil {
+		tracer.SetError(sp, err)
+	}
+
 	return err
 }
 
 // UpdateVideoStream replaces the VideoStream with ID model.VideoStreamID with the given object
 // This method is not yet implemented
-func (s *Store) UpdateVideoStream(model.VideoStreamID, model.VideoStream) error {
+func (s *Store) UpdateVideoStream(context.Context, model.VideoStreamID, model.VideoStream) error {
 	return errors.New("not implemented")
 }
 
 // DeleteVideoStream deleted the VideoStream with ID model.VideoStreamID
 // This method is not yet implemented
-func (s *Store) DeleteVideoStream(model.VideoStreamID) error {
+func (s *Store) DeleteVideoStream(context.Context, model.VideoStreamID) error {
 	return errors.New("not implemented")
 }

@@ -1,8 +1,11 @@
 package api
 
 import (
+	"context"
+
 	"github.com/JoeReid/apiutils"
 	"github.com/JoeReid/apiutils/jsoncodec"
+	"github.com/JoeReid/apiutils/tracer"
 	"github.com/JoeReid/apiutils/yamlcodec"
 	"github.com/JoeReid/buffassignment/api/buff"
 	"github.com/JoeReid/buffassignment/api/videostream"
@@ -19,10 +22,14 @@ import (
 //
 // The api is returned as a chi router, allowing for easy use as a
 // subrouter, if desired.
-func Versioned() (*chi.Mux, error) {
+func Versioned(ctx context.Context) (*chi.Mux, error) {
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "build versioned api")
+	defer sp.Finish()
+
 	r := chi.NewRouter()
 
 	// Configure middleware
+	tracer.Log(sp, "configuring router middleware")
 	r.Use(
 		httptracer.Tracer(
 			opentracing.GlobalTracer(),
@@ -35,8 +42,10 @@ func Versioned() (*chi.Mux, error) {
 		middleware.RedirectSlashes,
 	)
 
-	routerV1, err := v1()
+	tracer.Log(sp, "building api v1")
+	routerV1, err := v1(ctx)
 	if err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
@@ -44,10 +53,17 @@ func Versioned() (*chi.Mux, error) {
 	return r, nil
 }
 
-func v1() (*chi.Mux, error) {
+func v1(ctx context.Context) (*chi.Mux, error) {
+	// linter thinks we want to assign here
+	// realy we only want shadowing, we just dont call anything with the context yet
+	// nolint:ineffassign,staticcheck
+	sp, ctx := opentracing.StartSpanFromContext(ctx, "build versioned api")
+	defer sp.Finish()
+
 	r := chi.NewRouter()
 
 	// configure all the codec options
+	tracer.Log(sp, "configuring codec selectors")
 	codecSelector, err := apiutils.NewRequestSelector(
 		apiutils.RegisterCodec(
 			jsoncodec.New(), "json", "application/json"),
@@ -60,16 +76,20 @@ func v1() (*chi.Mux, error) {
 			yamlcodec.New(), "yaml", "application/x-yaml"),
 	)
 	if err != nil {
+		tracer.SetError(sp, err)
+		return nil, err
+	}
+
+	tracer.Log(sp, "getting database config")
+	dc, err := config.DBConfig()
+	if err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
 	// TODO: how do we shut this down?
 	// Do we need to? can it just follow the lifecycle of the service?
-	dc, err := config.DBConfig()
-	if err != nil {
-		return nil, err
-	}
-
+	tracer.Log(sp, "building store instance")
 	store, err := postgres.NewStore(
 		postgres.SetDBUser(dc.DBUser),
 		postgres.SetDBPassword(dc.DBPassword),
@@ -79,15 +99,18 @@ func v1() (*chi.Mux, error) {
 		postgres.SetConnectTimeout(dc.DBConnectTimeout),
 	)
 	if err != nil {
+		tracer.SetError(sp, err)
 		return nil, err
 	}
 
 	// video_stream endpoint
+	tracer.Log(sp, "configuring /video_streams handlers")
 	r.Method("GET", "/video_streams", apiutils.HandlerWithSelector(codecSelector, videostream.NewListHandler(store)))
 	r.Method("GET", "/video_streams/{uuid}", apiutils.HandlerWithSelector(codecSelector, videostream.NewGetHandler(store)))
 	r.Method("GET", "/video_streams/{uuid}/buffs", apiutils.HandlerWithSelector(codecSelector, buff.NewListForStreamHandler(store)))
 
 	// buffs endpoint
+	tracer.Log(sp, "configuring /buffs handlers")
 	r.Method("GET", "/buffs", apiutils.HandlerWithSelector(codecSelector, buff.NewListHandler(store)))
 	r.Method("GET", "/buffs/{uuid}", apiutils.HandlerWithSelector(codecSelector, buff.NewGetHandler(store)))
 
